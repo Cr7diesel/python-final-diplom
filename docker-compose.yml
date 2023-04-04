@@ -1,0 +1,25 @@
+version: "3.8"
+services:
+  web-app:
+    build:
+      context: .
+    ports:
+      - "8000:8000"
+    volumes:
+      - .:/app
+    environment:
+      - DB_HOST=database
+      - DB_NAME=orders
+      - DB_USER=admin
+      - DB_PASS=pass
+    command: >
+      sh -c "python manage.py runserver 0.0.0.0:8000"
+    depends_on:
+      - database
+
+  database:
+    image: postgres:14.7-alpine3.17
+    environment:
+      - POSTGRES_DB=orders
+      - POSTGRES_USER=admin
+      - POSTGRES_PASSWORD=pass
