@@ -2,7 +2,7 @@ FROM python:3.10-alpine3.17
 
 WORKDIR /app
 
-COPY . /app
+COPY ./orders /app
 COPY requirements.txt /tmp/requirements.txt
 
 EXPOSE 8000
