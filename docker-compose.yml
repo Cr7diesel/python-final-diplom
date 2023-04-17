@@ -1,0 +1,50 @@
+version: '3.8'
+
+services:
+  web_app:
+    build:
+      context: .
+    ports:
+      - "8000:8000"
+    volumes:
+      - .:/src
+    environment:
+      - DB_HOST=database
+      - DB_NAME=diplom
+      - DB_USER=anatoly
+      - DB_PASS=pass
+    command: >
+      sh -c "python manage.py runserver 0.0.0.0:8000"
+    depends_on:
+      - database
+
+  database:
+    image: postgres:14.7-alpine3.17
+    environment:
+      - POSTGRES_DB=diplom
+      - POSTGRES_USER=anatoly
+      - POSTGRES_PASSWORD=pass
+    restart: unless-stopped
+
+  redis:
+    image: redis:7.0.5-alpine
+    hostname: redis
+
+  worker:
+    build:
+      context: .
+    hostname: worker
+    entrypoint: celery
+    command: -A celery_app.app worker --loglevel=info
+    volumes:
+      - .:/src
+    links:
+      - redis
+    depends_on:
+      - redis
+      - database
+    environment:
+      - DB_HOST=database
+      - DB_NAME=diplom
+      - DB_USER=anatoly
+      - DB_PASS=pass

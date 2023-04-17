@@ -23,9 +23,12 @@ class RegisterAccount(APIView):
     """
     # Регистрация методом POST
     def post(self, request, *args, **kwargs):
-        if {'first_name', 'last_name', 'email', 'password', 'company', 'position'}.issubset(
-                request.data):
+
+        # проверяем обязательные аргументы
+        if {'first_name', 'last_name', 'email', 'password', 'company', 'position'}.issubset(request.data):
             errors = {}
+
+            # проверяем пароль на сложность
 
             try:
                 validate_password(request.data['password'])
@@ -37,7 +40,7 @@ class RegisterAccount(APIView):
                 return JsonResponse({'Status': False, 'Errors': {'password': error_array}})
             else:
                 # проверяем данные для уникальности имени пользователя
-                request.data._mutable = True
+                request.data.copy()
                 request.data.update({})
                 user_serializer = UserSerializer(data=request.data)
                 if user_serializer.is_valid():
@@ -427,3 +430,16 @@ class OrderView(APIView):
                         return JsonResponse({'Status': True})
 
         return JsonResponse({'Status': False, 'Errors': 'Не указаны все необходимые аргументы'})
+
+
+class ThanksForOrder(APIView):
+
+    permission_classes = (IsAuthenticated,)
+
+    def get(self, request):
+        user_id = request.user.id
+        if user_id:
+            user = User.objects.get(id=user_id)
+            message = f'{user.username} Спасибо за ваш заказ!'
+            return JsonResponse({'Status': True, 'Message': {message}})
+        return JsonResponse({'Status': False, 'Errors': 'Пользователь не найден'})
