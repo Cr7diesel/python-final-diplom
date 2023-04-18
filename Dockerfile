@@ -1,10 +1,14 @@
-FROM python:3.10
+FROM python:3.10-alpine3.17
 
-COPY requirements.txt /src/requirements.txt
-COPY . /src
+COPY requirements.txt /tmp/requirements.txt
+COPY orders /orders
 
-WORKDIR /src
+WORKDIR /orders
 
 EXPOSE 8000
 
-RUN pip install --no-cache-dir --upgrade -r /src/requirements.txt
+RUN apk add postgresql-client build-base postgresql-dev
+
+RUN pip install -r /tmp/requirements.txt
+RUN adduser --disabled-password user2
+USER user2
