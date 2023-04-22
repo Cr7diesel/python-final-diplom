@@ -98,6 +98,9 @@ class User(AbstractUser):
 
 
 class Shop(models.Model):
+    """
+    Модель магазина
+    """
     name = models.CharField(max_length=50, verbose_name='Название')
     url = models.URLField(verbose_name='Ссылка', null=True, blank=True)
     user = models.OneToOneField(User, verbose_name='Пользователь',
@@ -115,6 +118,9 @@ class Shop(models.Model):
 
 
 class Category(models.Model):
+    """
+    Модель категорий
+    """
     name = models.CharField(max_length=40, verbose_name='Название')
     shops = models.ManyToManyField(Shop, verbose_name='Магазины', related_name='categories', blank=True)
 
@@ -128,6 +134,9 @@ class Category(models.Model):
 
 
 class Product(models.Model):
+    """
+    Модель продуктов
+    """
     name = models.CharField(max_length=80, verbose_name='Название')
     category = models.ForeignKey(Category, verbose_name='Категория', related_name='products',
                                  blank=True, on_delete=models.CASCADE)
@@ -142,6 +151,9 @@ class Product(models.Model):
 
 
 class ProductInfo(models.Model):
+    """
+    МОдель с информацией о продуктах
+    """
     model = models.CharField(max_length=80, verbose_name='Модель', blank=True)
     external_id = models.PositiveIntegerField(verbose_name='Внешний ИД')
     product = models.ForeignKey(Product, verbose_name='Продукт', related_name='product_infos',
@@ -162,6 +174,9 @@ class ProductInfo(models.Model):
 
 
 class Parameter(models.Model):
+    """
+    Модель параметра
+    """
     name = models.CharField(max_length=40, verbose_name='Название')
 
     class Meta:
@@ -174,6 +189,9 @@ class Parameter(models.Model):
 
 
 class ProductParameter(models.Model):
+    """
+    Модель параметров продуктов
+    """
     product_info = models.ForeignKey(ProductInfo, verbose_name='Информация о продукте',
                                      related_name='product_parameters', blank=True,
                                      on_delete=models.CASCADE)
@@ -192,6 +210,9 @@ class ProductParameter(models.Model):
 
 
 class Contact(models.Model):
+    """
+    Модель контактов пользователя
+    """
     user = models.ForeignKey(User, verbose_name='Пользователь',
                              related_name='contacts', blank=True,
                              on_delete=models.CASCADE)
@@ -213,6 +234,9 @@ class Contact(models.Model):
 
 
 class Order(models.Model):
+    """
+    Модель заказа
+    """
     user = models.ForeignKey(User, verbose_name='Пользователь',
                              related_name='orders', blank=True,
                              on_delete=models.CASCADE)
@@ -224,7 +248,7 @@ class Order(models.Model):
 
     class Meta:
         verbose_name = 'Заказ'
-        verbose_name_plural = "Список заказ"
+        verbose_name_plural = "Список заказов"
         ordering = ('-created_at',)
 
     def __str__(self):
@@ -232,6 +256,9 @@ class Order(models.Model):
 
 
 class OrderItem(models.Model):
+    """
+    Модель продуктов заказа
+    """
     order = models.ForeignKey(Order, verbose_name='Заказ', related_name='ordered_items', blank=True,
                               on_delete=models.CASCADE)
 
@@ -249,6 +276,9 @@ class OrderItem(models.Model):
 
 
 class ConfirmEmailToken(models.Model):
+    """
+    Модель подтверждения токена
+    """
     class Meta:
         verbose_name = 'Токен подтверждения Email'
         verbose_name_plural = 'Токены подтверждения Email'

@@ -81,6 +81,9 @@ def new_order(user_id, **kwargs):
 
 @shared_task()
 def do_import(url, user_id):
+    """
+    Обновляем прайс от партнера
+    """
     if url:
         validate_url = URLValidator()
         try:

@@ -43,6 +43,12 @@ INSTALLED_APPS = [
     'django_rest_passwordreset',
 
     'backend.apps.BackendConfig',
+
+    'allauth',
+    'allauth.account',
+    'allauth.socialaccount',
+    'allauth.socialaccount.providers.vk',
+    'allauth.socialaccount.providers.github'
 ]
 
 MIDDLEWARE = [
@@ -150,12 +156,27 @@ REST_FRAMEWORK = {
     'DEFAULT_RENDERER_CLASSES': (
         'rest_framework.renderers.JSONRenderer',
         'rest_framework.renderers.BrowsableAPIRenderer',
-
     ),
 
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework.authentication.TokenAuthentication',
     ),
+
+    'DEFAULT_THROTTLE_CLASSES': (
+        'rest_framework.throttling.UserRateThrottle',
+        'rest_framework.throttling.AnonRateThrottle',
+    ),
+
+    'DEFAULT_THROTTLE_RATES': {
+        'user': '100/minute',
+        'anon': '50/minute',
+    },
+    'TEST_REQUEST_DEFAULT_FORMAT': 'json',
 }
+
+AUTHENTICATION_BACKENDS = (
+    'django.contrib.auth.backends.ModelBackend',
+    'allauth.account.auth_backends.AuthenticationBackend',
+)
 
 CELERY_BROKER_URL = "redis://redis:6379/0"

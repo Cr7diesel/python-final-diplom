@@ -1,14 +1,14 @@
-from distutils.util import strtobool
 from django.contrib.auth import authenticate
 from django.contrib.auth.password_validation import validate_password
 from django.db import IntegrityError
 from django.db.models import Q, Sum, F
 from django.http import JsonResponse
 from rest_framework.authtoken.models import Token
-from rest_framework.generics import ListAPIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
+from rest_framework.throttling import UserRateThrottle, AnonRateThrottle
 from rest_framework.views import APIView
+from rest_framework.viewsets import ReadOnlyModelViewSet, ModelViewSet
 from ujson import loads as load_json
 
 from .models import *
@@ -21,15 +21,9 @@ class RegisterAccount(APIView):
     """
     Для регистрации покупателей
     """
-    # Регистрация методом POST
     def post(self, request, *args, **kwargs):
 
-        # проверяем обязательные аргументы
         if {'first_name', 'last_name', 'email', 'password', 'company', 'position'}.issubset(request.data):
-            errors = {}
-
-            # проверяем пароль на сложность
-
             try:
                 validate_password(request.data['password'])
             except Exception as password_error:
@@ -39,12 +33,10 @@ class RegisterAccount(APIView):
                     error_array.append(item)
                 return JsonResponse({'Status': False, 'Errors': {'password': error_array}})
             else:
-                # проверяем данные для уникальности имени пользователя
                 request.data.copy()
                 request.data.update({})
                 user_serializer = UserSerializer(data=request.data)
                 if user_serializer.is_valid():
-                    # сохраняем пользователя
                     user = user_serializer.save()
                     user.set_password(request.data['password'])
                     user.save()
@@ -60,10 +52,9 @@ class ConfirmAccount(APIView):
     """
     Класс для подтверждения почтового адреса
     """
-    # Регистрация методом POST
-    def post(self, request, *args, **kwargs):
+    throttle_classes = (AnonRateThrottle,)
 
-        # проверяем обязательные аргументы
+    def post(self, request, *args, **kwargs):
         if {'email', 'token'}.issubset(request.data):
 
             token = ConfirmEmailToken.objects.filter(user__email=request.data['email'],
@@ -84,19 +75,15 @@ class AccountDetails(APIView):
     Класс для работы с данными пользователя
     """
     permission_classes = (IsAuthenticated, IsOwner)
+    throttle_classes = (UserRateThrottle,)
 
-    # получить данные
     def get(self, request, *args, **kwargs):
         serializer = UserSerializer(request.user)
         return Response(serializer.data)
 
-    # Редактирование методом POST
     def post(self, request, *args, **kwargs):
-        # проверяем обязательные аргументы
 
         if 'password' in request.data:
-            errors = {}
-            # проверяем пароль на сложность
             try:
                 validate_password(request.data['password'])
             except Exception as password_error:
@@ -108,7 +95,6 @@ class AccountDetails(APIView):
             else:
                 request.user.set_password(request.data['password'])
 
-        # проверяем остальные данные
         user_serializer = UserSerializer(request.user, data=request.data, partial=True)
         if user_serializer.is_valid():
             user_serializer.save()
@@ -121,7 +107,8 @@ class LoginAccount(APIView):
     """
     Класс для авторизации пользователей
     """
-    # Авторизация методом POST
+    throttle_classes = (AnonRateThrottle,)
+
     def post(self, request, *args, **kwargs):
 
         if {'email', 'password'}.issubset(request.data):
@@ -139,7 +126,7 @@ class LoginAccount(APIView):
         return JsonResponse({'Status': False, 'Errors': 'Не указаны все необходимые аргументы'})
 
 
-class CategoryView(ListAPIView):
+class CategoryView(ReadOnlyModelViewSet):
     """
     Класс для просмотра категорий
     """
@@ -147,7 +134,7 @@ class CategoryView(ListAPIView):
     serializer_class = CategorySerializer
 
 
-class ShopView(ListAPIView):
+class ShopView(ReadOnlyModelViewSet):
     """
     Класс для просмотра списка магазинов
     """
@@ -159,6 +146,8 @@ class ProductInfoView(APIView):
     """
     Класс для поиска товаров
     """
+    throttle_classes = (AnonRateThrottle,)
+
     def get(self, request, *args, **kwargs):
 
         query = Q(shop__state=True)
@@ -171,7 +160,6 @@ class ProductInfoView(APIView):
         if category_id:
             query = query & Q(product__category_id=category_id)
 
-        # фильтруем и отбрасываем дуликаты
         queryset = ProductInfo.objects.filter(
             query).select_related(
             'shop', 'product__category').prefetch_related(
@@ -187,8 +175,8 @@ class BasketView(APIView):
     Класс для работы с корзиной пользователя
     """
     permission_classes = (IsAuthenticated,)
+    throttle_classes = (UserRateThrottle,)
 
-    # получить корзину
     def get(self, request, *args, **kwargs):
         basket = Order.objects.filter(
             user_id=request.user.id, state='basket').prefetch_related(
@@ -200,7 +188,6 @@ class BasketView(APIView):
         serializer = OrderSerializer(basket, many=True)
         return Response(serializer.data)
 
-    # редактировать корзину
     def post(self, request, *args, **kwargs):
         items_sting = request.data.get('items')
         if items_sting:
@@ -228,7 +215,6 @@ class BasketView(APIView):
                 return JsonResponse({'Status': True, 'Создано объектов': objects_created})
         return JsonResponse({'Status': False, 'Errors': 'Не указаны все необходимые аргументы'})
 
-    # удалить товары из корзины
     def delete(self, request, *args, **kwargs):
         items_sting = request.data.get('items')
         if items_sting:
@@ -246,7 +232,6 @@ class BasketView(APIView):
                 return JsonResponse({'Status': True, 'Удалено объектов': deleted_count})
         return JsonResponse({'Status': False, 'Errors': 'Не указаны все необходимые аргументы'})
 
-    # добавить позиции в корзину
     def put(self, request, *args, **kwargs):
         items_sting = request.data.get('items')
         if items_sting:
@@ -273,6 +258,7 @@ class PartnerUpdate(APIView):
 
     """
     permission_classes = (IsAuthenticated, IsShop,)
+    throttle_classes = (UserRateThrottle,)
 
     def post(self, request, *args, **kwargs):
         url = request.data.get('url')
@@ -286,29 +272,14 @@ class PartnerUpdate(APIView):
         return JsonResponse({'Status': False, 'Errors': 'Не указаны все необходимые аргументы'})
 
 
-class PartnerState(APIView):
+class PartnerState(ModelViewSet):
     """
     Класс для работы со статусом поставщика
     """
     permission_classes = (IsAuthenticated, IsShop,)
-
-    # получить текущий статус
-    def get(self, request, *args, **kwargs):
-        shop = request.user.shop
-        serializer = ShopSerializer(shop)
-        return Response(serializer.data)
-
-    # изменить текущий статус
-    def post(self, request, *args, **kwargs):
-        state = request.data.get('state')
-        if state:
-            try:
-                Shop.objects.filter(user_id=request.user.id).update(state=strtobool(state))
-                return JsonResponse({'Status': True})
-            except ValueError as error:
-                return JsonResponse({'Status': False, 'Errors': str(error)})
-
-        return JsonResponse({'Status': False, 'Errors': 'Не указаны все необходимые аргументы'})
+    throttle_classes = (UserRateThrottle,)
+    queryset = Shop.objects.all()
+    serializer_class = ShopSerializer
 
 
 class PartnerOrders(APIView):
@@ -316,8 +287,10 @@ class PartnerOrders(APIView):
     Класс для получения заказов поставщиками
     """
     permission_classes = (IsAuthenticated, IsShop,)
+    throttle_classes = (UserRateThrottle,)
 
     def get(self, request, *args, **kwargs):
+
         order = Order.objects.filter(
             ordered_items__product_info__shop__user_id=request.user.id).exclude(
             state='basket').prefetch_related(
@@ -336,14 +309,13 @@ class ContactView(APIView):
     Класс для работы с контактами покупателей
     """
     permission_classes = (IsAuthenticated,)
+    throttle_classes = (UserRateThrottle,)
 
-    # получить мои контакты
     def get(self, request, *args, **kwargs):
         contact = Contact.objects.filter(user_id=request.user.id)
         serializer = ContactSerializer(contact, many=True)
         return Response(serializer.data)
 
-    # добавить новый контакт
     def post(self, request, *args, **kwargs):
         if {'city', 'street', 'phone'}.issubset(request.data):
             request.data._mutable = True
@@ -358,7 +330,6 @@ class ContactView(APIView):
 
         return JsonResponse({'Status': False, 'Errors': 'Не указаны все необходимые аргументы'})
 
-    # удалить контакт
     def delete(self, request, *args, **kwargs):
         items_sting = request.data.get('items')
         if items_sting:
@@ -375,7 +346,6 @@ class ContactView(APIView):
                 return JsonResponse({'Status': True, 'Удалено объектов': deleted_count})
         return JsonResponse({'Status': False, 'Errors': 'Не указаны все необходимые аргументы'})
 
-    # редактировать контакт
     def put(self, request, *args, **kwargs):
         if 'id' in request.data:
             if request.data['id'].isdigit():
@@ -398,8 +368,8 @@ class OrderView(APIView):
     Класс для получения и размешения заказов пользователями
     """
     permission_classes = (IsAuthenticated,)
+    throttle_classes = (UserRateThrottle,)
 
-    # получить мои заказы
     def get(self, request, *args, **kwargs):
         order = Order.objects.filter(
             user_id=request.user.id).exclude(state='basket').prefetch_related(
@@ -412,7 +382,6 @@ class OrderView(APIView):
         serializer = OrderSerializer(order, many=True)
         return Response(serializer.data)
 
-    # разместить заказ из корзины
     def post(self, request, *args, **kwargs):
         if {'id', 'contact'}.issubset(request.data):
             if request.data['id'].isdigit():
@@ -433,13 +402,17 @@ class OrderView(APIView):
 
 
 class ThanksForOrder(APIView):
+    """
+    Класс спасибо за заказ
+    """
 
     permission_classes = (IsAuthenticated,)
+    throttle_classes = (UserRateThrottle,)
 
     def get(self, request):
         user_id = request.user.id
         if user_id:
             user = User.objects.get(id=user_id)
-            message = f'{user.username} Спасибо за ваш заказ!'
+            message = f'{user.username}, Спасибо за ваш заказ!'
             return JsonResponse({'Status': True, 'Message': {message}})
         return JsonResponse({'Status': False, 'Errors': 'Пользователь не найден'})
