@@ -4,8 +4,7 @@ from model_bakery import baker
 from rest_framework.test import APIClient
 from rest_framework.authtoken.models import Token
 
-from orders.backend.models import User, Shop, Order, Category, Product, ProductInfo
-from orders.backend.serializers import ShopSerializer, CategorySerializer
+from backend.serializers import ShopSerializer, CategorySerializer
 
 
 @pytest.fixture
@@ -14,51 +13,51 @@ def client():
 
 
 @pytest.fixture
-def user(client):
+def user(db, client, django_user_model):
     data = {
         'username': 'user1',
         'email': 'test_email@mail.ru',
         'password': 'test1234'
     }
-    user = User.objects.create_user(**data)
+    user = django_user_model.objects.create_user(**data)
     client.force_login(user)
     return user
 
 
 @pytest.fixture
-def token(client, user):
+def token(db, client, user):
     Token.objects.create(user=user)
     token = Token.objects.get(user=user)
     return token
 
 
 @pytest.fixture
-def auth_client(client, user, token):
+def auth_client(db, client, user, token):
     client.force_authenticate(user=user, token=token)
     return client
 
 
 @pytest.fixture
-def partner(client):
+def partner(db, client, django_user_model):
     data = {
         'email': 'partner_email@mail.ru',
         'password': 'partner_pass',
         'user_type': 'shop'
     }
-    partner = User.objects.create_user(**data)
+    partner = django_user_model.objects.create_user(**data)
     client.force_login(partner)
     return partner
 
 
 @pytest.fixture
-def partner_token(client, partner):
+def partner_token(db, client, partner):
     Token.objects.create(user=partner)
     token_partner = Token.objects.get(user=partner)
     return token_partner
 
 
 @pytest.fixture
-def auth_partner(client, partner, partner_token):
+def auth_partner(db, client, partner, partner_token):
     client.force_authenticate(user=partner, token=partner_token)
     return client
 
@@ -66,31 +65,31 @@ def auth_partner(client, partner, partner_token):
 @pytest.fixture
 def shop_factory(partner):
     def factory(**kwargs):
-        return baker.make(Shop, user=partner, **kwargs)
+        return baker.make('Shop', user=partner, **kwargs)
     return factory
 
 
 @pytest.fixture
 def order_factory():
     def factory(**kwargs):
-        return baker.make(Order, **kwargs)
+        return baker.make('Order', **kwargs)
     return factory
 
 
 @pytest.fixture
 def category_factory():
     def factory(**kwargs):
-        return baker.make(Category, **kwargs)
+        return baker.make('Category', **kwargs)
     return factory
 
 
 @pytest.fixture
 def product_info_factory():
     def factory(**kwargs):
-        category = baker.make(Category, **kwargs)
-        product = baker.make(Product, category_id=category.id, **kwargs)
-        shop = baker.make(Shop, **kwargs)
-        return baker.make(ProductInfo, product_id=product.id, shop_id=shop.id, **kwargs)
+        category = baker.make('Category', **kwargs)
+        product = baker.make('Product', category_id=category.id, **kwargs)
+        shop = baker.make('Shop', **kwargs)
+        return baker.make('ProductInfo', product_id=product.id, shop_id=shop.id, **kwargs)
     return factory
 
 

@@ -3,6 +3,7 @@ from django.contrib.auth.password_validation import validate_password
 from django.db import IntegrityError
 from django.db.models import Q, Sum, F
 from django.http import JsonResponse
+from drf_spectacular.utils import extend_schema
 from rest_framework.authtoken.models import Token
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
@@ -148,6 +149,7 @@ class ProductInfoView(APIView):
     """
     throttle_classes = (AnonRateThrottle,)
 
+    @extend_schema(responses=ProductInfoSerializer)
     def get(self, request, *args, **kwargs):
 
         query = Q(shop__state=True)
@@ -177,6 +179,7 @@ class BasketView(APIView):
     permission_classes = (IsAuthenticated,)
     throttle_classes = (UserRateThrottle,)
 
+    @extend_schema(responses=OrderSerializer)
     def get(self, request, *args, **kwargs):
         basket = Order.objects.filter(
             user_id=request.user.id, state='basket').prefetch_related(
@@ -188,6 +191,7 @@ class BasketView(APIView):
         serializer = OrderSerializer(basket, many=True)
         return Response(serializer.data)
 
+    @extend_schema(responses=OrderItemSerializer)
     def post(self, request, *args, **kwargs):
         items_sting = request.data.get('items')
         if items_sting:
@@ -215,6 +219,7 @@ class BasketView(APIView):
                 return JsonResponse({'Status': True, 'Создано объектов': objects_created})
         return JsonResponse({'Status': False, 'Errors': 'Не указаны все необходимые аргументы'})
 
+    @extend_schema()
     def delete(self, request, *args, **kwargs):
         items_sting = request.data.get('items')
         if items_sting:
@@ -232,6 +237,7 @@ class BasketView(APIView):
                 return JsonResponse({'Status': True, 'Удалено объектов': deleted_count})
         return JsonResponse({'Status': False, 'Errors': 'Не указаны все необходимые аргументы'})
 
+    @extend_schema()
     def put(self, request, *args, **kwargs):
         items_sting = request.data.get('items')
         if items_sting:
@@ -370,6 +376,7 @@ class OrderView(APIView):
     permission_classes = (IsAuthenticated,)
     throttle_classes = (UserRateThrottle,)
 
+    @extend_schema(responses=OrderSerializer)
     def get(self, request, *args, **kwargs):
         order = Order.objects.filter(
             user_id=request.user.id).exclude(state='basket').prefetch_related(
@@ -382,6 +389,7 @@ class OrderView(APIView):
         serializer = OrderSerializer(order, many=True)
         return Response(serializer.data)
 
+    @extend_schema()
     def post(self, request, *args, **kwargs):
         if {'id', 'contact'}.issubset(request.data):
             if request.data['id'].isdigit():

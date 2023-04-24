@@ -48,7 +48,10 @@ INSTALLED_APPS = [
     'allauth.account',
     'allauth.socialaccount',
     'allauth.socialaccount.providers.vk',
-    'allauth.socialaccount.providers.github'
+    'allauth.socialaccount.providers.github',
+
+    'drf_spectacular',
+    'silk',
 ]
 
 MIDDLEWARE = [
@@ -59,6 +62,8 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+
+    'silk.middleware.SilkyMiddleware',
 ]
 
 ROOT_URLCONF = 'orders.urls'
@@ -172,6 +177,7 @@ REST_FRAMEWORK = {
         'anon': '50/minute',
     },
     'TEST_REQUEST_DEFAULT_FORMAT': 'json',
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
 }
 
 AUTHENTICATION_BACKENDS = (
@@ -179,4 +185,28 @@ AUTHENTICATION_BACKENDS = (
     'allauth.account.auth_backends.AuthenticationBackend',
 )
 
+SOCIALACCOUNT_PROVIDERS = {
+    'vk': {
+        'APP': {
+            'client_id': '1',
+            'secret': '2',
+            'key': ''
+        }
+    },
+    'google': {
+        'APP': {
+            'client_id': '3',
+            'secret': '4',
+            'key': ''
+        }
+    }
+}
+
 CELERY_BROKER_URL = "redis://redis:6379/0"
+
+SPECTACULAR_SETTINGS = {
+    'TITLE': 'final diplom',
+    'DESCRIPTION': 'Api for service of sales',
+    'VERSION': '1.0.0',
+    'SERVE_INCLUDE_SCHEMA': False,
+}
