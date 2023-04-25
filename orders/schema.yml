@@ -379,11 +379,7 @@ paths:
       - tokenAuth: []
       responses:
         '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Contact'
-          description: ''
+          description: No response body
     post:
       operationId: user_contact_create
       description: Класс для работы с контактами покупателей
@@ -393,11 +389,7 @@ paths:
       - tokenAuth: []
       responses:
         '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Contact'
-          description: ''
+          description: No response body
     put:
       operationId: user_contact_update
       description: Класс для работы с контактами покупателей
@@ -407,11 +399,7 @@ paths:
       - tokenAuth: []
       responses:
         '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Contact'
-          description: ''
+          description: No response body
     delete:
       operationId: user_contact_destroy
       description: Класс для работы с контактами покупателей

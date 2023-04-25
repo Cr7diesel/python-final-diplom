@@ -102,7 +102,7 @@ def product_info_factory():
 @pytest.mark.django_db
 def test_get_basket(user, auth_client, order_factory):
     order_factory(make_m2m=True, user=user)
-    url = reverse("basket")
+    url = reverse("backend:basket")
     response = auth_client.get(url)
     assert response.status_code == 200
 
@@ -112,7 +112,7 @@ def test_add_into_basket(user, auth_client, order_factory,
                          product_info_factory):
     product = product_info_factory(make_m2m=True)
     order_factory(make_m2m=True, user=user)
-    url = reverse("basket")
+    url = reverse("backend:basket")
     response = auth_client.post(
         url, {"products": f'({{"product_info": {product.id}, '
                           f'"quantity": "1"}})'}
@@ -125,7 +125,7 @@ def test_add_into_basket(user, auth_client, order_factory,
 @pytest.mark.django_db
 def test_get_partner_status(auth_partner, shop_factory):
     shop = shop_factory(make_m2m=True)
-    url = reverse("partner-state")
+    url = reverse("backend:partner-state")
     response = auth_partner.get(url)
     response_json = response.json()
     assert response.status_code == 200
@@ -136,7 +136,7 @@ def test_get_partner_status(auth_partner, shop_factory):
 @pytest.mark.django_db
 def test_partner_update_status(auth_partner, shop_factory):
     shop_factory(make_m2m=True)
-    url = reverse("partner-state")
+    url = reverse("backend:partner-state")
     response = auth_partner.post(url, {"state": True})
     response_json = response.json()
     assert response.status_code == 200
@@ -146,7 +146,7 @@ def test_partner_update_status(auth_partner, shop_factory):
 @pytest.mark.django_db
 def test_get_shop(client, shop_factory):
     shop = shop_factory(make_m2m=True)
-    url = reverse("shops")
+    url = reverse("backend:shops")
     response = client.get(url)
     response_json = response.json()
     serializer_data = ShopSerializer(shop, many=True).data
@@ -157,7 +157,7 @@ def test_get_shop(client, shop_factory):
 @pytest.mark.django_db
 def test_get_categories(client, category_factory):
     category = category_factory(make_m2m=True)
-    url = reverse("categories")
+    url = reverse("backend:categories")
     response = client.get(url)
     response_json = response.json()
     serializer_data = CategorySerializer(category, many=True).data
@@ -167,7 +167,7 @@ def test_get_categories(client, category_factory):
 
 @pytest.mark.django_db
 def test_thanks(auth_client):
-    url = reverse("thanks")
+    url = reverse("backend:thanks")
     response = auth_client.get(url)
     response_json = response.json()
     assert response.status_code == 200

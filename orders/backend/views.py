@@ -564,6 +564,6 @@ class ThanksForOrder(APIView):
         if user_id:
             user = User.objects.get(id=user_id)
             message = f"{user.username}, Спасибо за ваш заказ!"
-            return JsonResponse({"Status": True, "Message": {message}})
+            return JsonResponse({"Status": True, "Message": f'{message}'})
         return JsonResponse({"Status": False,
                              "Errors": "Пользователь не найден"})

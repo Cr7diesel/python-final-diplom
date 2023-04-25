@@ -21,13 +21,13 @@ from django_rest_passwordreset.views import (
 )
 from rest_framework.routers import DefaultRouter
 
+app_name = "backend"
+
 r = DefaultRouter()
-r.register("shops", ShopView, basename="shops")
+r.register("shops", ShopView, basename="shops",)
 r.register("categories", CategoryView, basename="categories")
 r.register("partner/state", PartnerState, basename="partner-state")
 
-
-app_name = "backend"
 
 urlpatterns = [
     path("partner/update", PartnerUpdate.as_view(), name="partner-update"),
