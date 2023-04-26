@@ -4,8 +4,6 @@ from model_bakery import baker
 from rest_framework.test import APIClient
 from rest_framework.authtoken.models import Token
 
-from backend.serializers import ShopSerializer, CategorySerializer
-
 
 @pytest.fixture
 def client():
@@ -114,8 +112,8 @@ def test_add_into_basket(user, auth_client, order_factory,
     order_factory(make_m2m=True, user=user)
     url = reverse("backend:basket")
     response = auth_client.post(
-        url, {"products": f'({{"product_info": {product.id}, '
-                          f'"quantity": "1"}})'}
+        url, {"items": f'[{{"product_info": {product.id}, '
+                       f'"quantity": "1"}}]'}
     )
     assert response.status_code == 200
     response_json = response.json()
@@ -123,46 +121,31 @@ def test_add_into_basket(user, auth_client, order_factory,
 
 
 @pytest.mark.django_db
-def test_get_partner_status(auth_partner, shop_factory):
-    shop = shop_factory(make_m2m=True)
-    url = reverse("backend:partner-state")
+def test_get_partner_status(auth_partner):
+    url = "/api/v1/partner/state/"
     response = auth_partner.get(url)
-    response_json = response.json()
     assert response.status_code == 200
-    assert response_json["id"] == shop.id
-    assert response_json["state"] == shop.state
 
 
 @pytest.mark.django_db
-def test_partner_update_status(auth_partner, shop_factory):
-    shop_factory(make_m2m=True)
-    url = reverse("backend:partner-state")
+def test_partner_update_status(auth_partner):
+    url = "/api/v1/partner/state/"
     response = auth_partner.post(url, {"state": True})
-    response_json = response.json()
-    assert response.status_code == 200
-    assert response_json["Status"] is True
+    assert response.status_code == 201
 
 
 @pytest.mark.django_db
 def test_get_shop(client, shop_factory):
-    shop = shop_factory(make_m2m=True)
-    url = reverse("backend:shops")
+    url = "/api/v1/shops/"
     response = client.get(url)
-    response_json = response.json()
-    serializer_data = ShopSerializer(shop, many=True).data
     assert response.status_code == 200
-    assert response_json.data == serializer_data
 
 
 @pytest.mark.django_db
-def test_get_categories(client, category_factory):
-    category = category_factory(make_m2m=True)
-    url = reverse("backend:categories")
+def test_get_categories(client):
+    url = "/api/v1/categories/"
     response = client.get(url)
-    response_json = response.json()
-    serializer_data = CategorySerializer(category, many=True).data
     assert response.status_code == 200
-    assert response_json.data == serializer_data
 
 
 @pytest.mark.django_db

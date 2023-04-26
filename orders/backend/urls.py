@@ -25,8 +25,8 @@ app_name = "backend"
 
 r = DefaultRouter()
 r.register("shops", ShopView, basename="shops",)
-r.register("categories", CategoryView, basename="categories")
-r.register("partner/state", PartnerState, basename="partner-state")
+r.register("categories", CategoryView, basename="categories",)
+r.register("partner/state", PartnerState, basename="partner-state",)
 
 
 urlpatterns = [
